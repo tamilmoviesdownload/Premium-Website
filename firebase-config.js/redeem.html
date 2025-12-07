@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Redeem Code</title></head>
+<body style="font-family: Georgia, serif;">
+  <h2>Redeem Code</h2>
+  <div id="status"></div>
+  <input id="code" placeholder="Enter redeem code" /><br/><br/>
+  <button id="btnRedeem">Redeem</button>
+  <p>Go to <a href="/movies.html">Movies</a> after redeeming.</p>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="/firebase-config.js"></script>
+<script>
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const functions = firebase.functions();
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location = '/login.html';
+      return;
+    }
+  });
+
+  document.getElementById('btnRedeem').addEventListener('click', async () => {
+    const code = (document.getElementById('code').value||'').trim();
+    if (!code) return alert('Enter code');
+    try {
+      const redeem = functions.httpsCallable('redeemCode');
+      const res = await redeem({ code });
+      alert('Activated until: ' + res.data.expiryDate);
+      window.location = '/movies.html';
+    } catch(err) {
+      alert('Redeem failed: ' + (err.message || JSON.stringify(err)));
+    }
+  });
+</script>
+</body>
+</html>
