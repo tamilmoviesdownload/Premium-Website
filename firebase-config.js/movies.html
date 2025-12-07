@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Premium Movies</title></head>
+<body style="font-family: Georgia, serif;">
+  <h2>Premium Movies</h2>
+  <div id="message"></div>
+  <div id="movies"></div>
+  <button id="btnLogout">Logout</button>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="/firebase-config.js"></script>
+<script>
+  // Replace with your functions URL after deploy
+  const GET_MOVIES_URL = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/getMovies';
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) return window.location = '/login.html';
+    const token = await user.getIdToken();
+    try {
+      const r = await fetch(GET_MOVIES_URL, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (r.status === 403) {
+        const e = await r.json();
+        if (e.error === 'expired') {
+          // show exact message you requested
+          document.getElementById('message').innerHTML = `<p>${e.message}</p><p><a href="/redeem.html">Redeem new code</a></p>`;
+          document.getElementById('movies').innerHTML = '';
+          return;
+        }
+        document.getElementById('message').innerText = 'Access denied';
+        return;
+      }
+      if (!r.ok) {
+        document.getElementById('message').innerText = 'Error fetching movies';
+        return;
+      }
+      const data = await r.json();
+      const movies = data.movies || [];
+      document.getElementById('movies').innerHTML = movies.map(m => {
+        const links = (m.links||[]).map(l => `<li><a href="${l.url}" target="_blank">${l.label}</a></li>`).join('');
+        return `<div style="border:1px solid #ccc;padding:10px;margin:10px"><h3>${m.title}</h3><ul>${links}</ul></div>`;
+      }).join('');
+    } catch(err) {
+      document.getElementById('message').innerText = 'Network error';
+    }
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', ()=>firebase.auth().signOut().then(()=>window.location='/login.html'));
+</script>
+</body>
+</html>
