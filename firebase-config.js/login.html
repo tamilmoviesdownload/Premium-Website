@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Login</title></head>
+<body style="font-family: Georgia, serif;">
+  <h2>Login (Username + Password)</h2>
+  <input id="username" placeholder="Username" /><br/><br/>
+  <input id="password" placeholder="Password" type="password" /><br/><br/>
+  <button id="btnLogin">Login</button>
+  <p>No account? <a href="/signup.html">Sign up</a></p>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="/firebase-config.js"></script>
+<script>
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  function syntheticEmail(username) {
+    const safe = username.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
+    return `${safe}@premium-website-0628.local`;
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const username = (document.getElementById('username').value||'').trim();
+    const password = (document.getElementById('password').value||'').trim();
+    if (!username || !password) return alert('Enter username and password');
+    const email = syntheticEmail(username);
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      // after login, send to redeem page if not premium check will happen on movies page
+      window.location = '/redeem.html';
+    } catch(err) {
+      alert(err.message);
+    }
+  });
+</script>
+</body>
+</html>
